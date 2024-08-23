@@ -57,7 +57,7 @@ def main():  # sourcery skip: remove-redundant-fstring
     password_strength = check_password_sterngth(password)
     
     # displaying the results of the password. 
-    print(f'The password strength is: ', password_strength)
+    print('The password strength is: ', password_strength)
     
 # executing the program
 if __name__ == "__main__":
