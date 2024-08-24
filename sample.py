@@ -1,5 +1,5 @@
 '''
-This Python program focuses on creating a GUI using tkinter for checking the password strength entered by the user.
+This Python program focuses on checking the password strength entered by the user.
 It also refers to an English dictionary and flags common words.
 '''
 
@@ -10,73 +10,76 @@ import math
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-def load_english_dictionary_words():
+def loading_English_dictionary_words():
     try:
-        # Opens the english-dictionary.txt in read mode
+        # Opens the english_dictionary.txt in read mode
         with open('english_dictionary.txt', 'r') as file:
-            # Read each line of the file, removes any surrounding whitespace,
-            # and converts the text into lowercase
+            # Read each line of the file, remove any surrounding whitespace,
+            # and convert the text into lowercase
             english_words = {line.strip().lower() for line in file}
-        # Returns the set of English words 
+        # Returns the set of English words
         return english_words
     except FileNotFoundError:
-        # Empty set is returned if the file is not available. 
+        # An empty set is returned if the file is not available
         return set()
 
-# Checking if the password contains a dictionary word
-def check_dictionary_word(password, english_words):
-    # Normalizing the password to lowercase
+# Checking if the password contains a dictionary word in refernce to dictionary provide
+def checking_dictionary_word(password, english_words):
+    # Normalizes the password to lowercase
     password_lowercase = password.lower()
-    # Check the whole password
+    # Checks the whole password
     if password_lowercase in english_words:
         return True
     # Checking all substrings of the password
     for i in range(len(password_lowercase)):
-        # Iterates over all possible substrings starting at index i.
+        # Iterates over all possible substrings starting at index i
         for j in range(i + 1, len(password_lowercase) + 1):
-            # Checks if any substring of the password is a dictionary word.
+            # Checks if any substring of the password is a dictionary word
             if password_lowercase[i:j] in english_words:
-                return True 
+                return True
     # If no dictionary word is found, returns False
     return False
 
-# Loading common passwords which are based on the keyboard layout
-def load_common_passwords():
+# Loading common passwords
+def loading_common_passwords():
     try:
         # Opens the common_password.txt in read mode
         with open('common_password.txt', 'r') as file:
-            # Read each line of the file, removes any surrounding whitespace
+            # Read each line of the file, remove any surrounding whitespace
             common_password = {line.strip() for line in file}
         # Returns the set of common passwords    
         return common_password
     except FileNotFoundError:
-        # Empty set is returned if the file is not available.
+        # An empty set is returned if the file is not available
         return set()
 
-# The goal here is to check if the password has been compromised in a data breach
-def check_pwned_password(password):
+# The goal here is to check if the password has been involved in a data breach
+def check_pwned_password(password):  # sourcery skip: use-next
     # Hashes the password using SHA-1 and converts the result to uppercase
     sha1_password = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
-    # Splits the first five characters of the hash and the remainder to the tail
+    # Splits the hash into the first five characters and the remainder
     first5, tail = sha1_password[:5], sha1_password[5:]
-    # Constructs the URL to query the HIBP API with the first 5 characters of the hash.
+    # Constructs the URL to query the HIBP API with the first 5 characters of the hash
     url = f"https://api.pwnedpasswords.com/range/{first5}"
     try:
-        # Sends an HTTP GET request to the API with the URL.
+        # Sends an HTTP GET request to the API with the URL
         response = requests.get(url)
-        # Splits the response into individual hash suffixes and their associated breach counts.
+        # Splits the response into individual hash suffixes and their associated breach counts
         hashes = (line.split(':') for line in response.text.splitlines())
         for h, count in hashes:
+            # If the hash tail matches, return the count of breaches
             if h == tail:
                 return int(count)
+        # If no match is found, return 0
         return 0
     except requests.RequestException:
         return -1  # Indicate API error
 
-# Calculating the entropy 
+# Calculating the entropy
 def calculate_entropy(password):
     charset_size = 0
     
+    # Check and count the variety of characters in the password
     if re.search(r"[a-z]", password):
         charset_size += 26
     if re.search(r"[A-Z]", password):
@@ -88,9 +91,11 @@ def calculate_entropy(password):
     if re.search(r"\s", password):
         charset_size += 1 
     
+    # If no valid characters are found, return 0 entropy
     if charset_size == 0:
         return 0
     
+    # Calculate entropy based on the length of the password and character set size
     entropy = len(password) * math.log2(charset_size)
     return entropy
 
@@ -105,6 +110,7 @@ def check_sequential_pattern(password):
         'zxcvbnm'
     ]
     
+    # Check if the password contains any common sequential patterns
     for sequence in sequences:
         for i in range(len(sequence) - 2):
             sub_seq = sequence[i:i + 3]
@@ -117,11 +123,13 @@ def check_repeated_characters(password):
     # Returns True if the password contains three or more consecutive identical characters
     return re.search(r'(.)\1\1', password) is not None
 
-# Providing suggestions for improving the password
+# Provide suggestions for improving the password
 def provide_suggestions(password):
     suggestions = []
+    
+    # Add suggestions based on password length and character variety
     if len(password) < 12:
-        suggestions.append("Password should be at least 12 characters long.")
+        suggestions.append("Password should be at least 12 characters long")
     if not re.search(r"[a-z]", password):
         suggestions.append("Add lowercase letters.")
     if not re.search(r"[A-Z]", password):
@@ -139,8 +147,8 @@ def provide_suggestions(password):
 
 # Main password evaluation function
 def evaluate_password(password, english_words):
-    # Correctly call the function to get the common passwords
-    common_password = load_common_passwords()
+    # Load the common passwords
+    common_password = loading_common_passwords()
     
     # Check if the password is a common password
     if password.lower() in common_password:
@@ -166,7 +174,7 @@ def evaluate_password(password, english_words):
         pwned_message = ""
     
     # Check if the password contains any dictionary words
-    if check_dictionary_word(password, english_words):
+    if checking_dictionary_word(password, english_words):
         return {
             'strength': 'Very Weak',
             'color': 'red',
@@ -213,10 +221,10 @@ def evaluate_password(password, english_words):
         'suggestions': suggestions
     }
 
-# Creating and setting up the Graphical User Interface (GUI)
+# Creating and setting up Graphical User Interface (GUI)
 def create_gui():
     # Load the dictionary words
-    english_words = load_english_dictionary_words()
+    english_words = loading_English_dictionary_words()
 
     # Event handler for password entry
     def on_password_entry(event):
