@@ -77,6 +77,7 @@ def check_pwned_password(password):  # sourcery skip: use-next
     
 # calculating the entropy 
 def calculate_entropy(password):
+    # sourcery skip: assign-if-exp, inline-immediately-returned-variable, reintroduce-else, remove-redundant-pass
     charset_size = 0
     
     if re.search(r"[a-z]", password):
@@ -97,6 +98,113 @@ def calculate_entropy(password):
     entropy = len(password)* math.log2(charset_size)
     return entropy
 
+# checking for sequntial pattern
+def check_sequential_pattern(password):
+    sequences =[
+        'abcdefghijklmnopqrstuvwxyz',
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        '0123456789',
+        'qwertyuiop',
+        'asdfghjkl',
+        'zxcvbnm'
+    ]
     
+    for  sequence in sequences:
+        for i in range(len(sequence)-2):
+            sub_seq = sequence[i:i+3]
+        if sub_seq in password.lower():
+            return True
+        
+# checking for repeated characters
+def check_repeated_characters(password):
+    return re.search(r'(.)\1\1', password) is not None
+
+# provide suggestions for improving password
+def provide_suggestions(password):
+    # sourcery skip: merge-list-append, move-assign
+    suggestions = []
+    if len(password)<12:
+        suggestions.append("Password should be at least 12 characters long")
+    if not re.search(r"[a-z]", password):
+        suggestions.append("Password should have at least one lowercase letter")
+    if not re.search(r"[a-z]", password):
+        suggestions.append("Add lowercase letters.")
+    if not re.search(r"[A-Z]", password):
+        suggestions.append("Add uppercase letters.")
+    if not re.search(r"\d", password):
+        suggestions.append("Add digits.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        suggestions.append("Add special characters.")
+    if check_sequential_pattern(password):
+        suggestions.append("Avoid sequential keyboard patterns.")
+    if check_repeated_characters(password):
+        suggestions.append("Avoid repeated characters.")
+    return suggestions
+
+# main password evaluation function
+def evaluate_password(password, english_words):
     
-    pass
+    common_password = loading_common_passwords
+    if password. lower() in common_password:
+        return{
+            'strength': 'Very Weak',
+            'color': 'red',
+            'score': 0,
+            'suggestions': ['This password is too common. Choose a more unique password.']
+        }
+        
+    pwned_count = check_pwned_password(password)
+    if pwned_count > 0:
+        return {
+            'strength': 'Compromised',
+            'color': 'darkred',
+            'score': 0,
+            'suggestions': [f"This password has been found in data breaches {pwned_count} times. Choose a different password."]
+        } 
+    elif pwned_count == -1:
+        pwned_message = "Could not check against breached passwords. Check your internet connection."
+    else:
+        pwned_message = ""
+        
+    # Check if the password contains any dictionory words
+    if checking_dictionary_word(password,  english_words):
+        return {
+            'strength': 'Very Weak',
+            'color': 'red',
+            'score': 0,
+            'suggestions': ['Your password contains dictionary words. Avoid using common words.']
+        }
+        
+    entropy = calculate_entropy(password)
+    
+    if entropy < 28:
+        strength = "Very Weak"
+        color = "Red"
+        score = 20
+    elif entropy < 36:
+        strength = 'Weak'
+        color = 'orange'
+        score = 40
+    elif entropy < 60:
+        strength = 'Moderate'
+        color = 'yellow'
+        score = 60
+    elif entropy < 100:
+        strength = 'Strong'
+        color = 'lightgreen'
+        score = 80
+    else:
+        strength = 'Very Strong'
+        color = 'green'
+        score = 100
+        
+    suggestions = provide_suggestions(password)
+    
+    if pwned_message:
+        suggestions.append(pwned_message)
+    return{
+        'strength': strength,
+        'color': color,
+        'score': score,
+        'suggestions': suggestions
+    }
